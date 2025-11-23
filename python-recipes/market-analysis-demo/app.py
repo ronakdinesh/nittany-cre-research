@@ -26,6 +26,20 @@ load_dotenv('.env.local')
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 
+# Authentication configuration
+VALID_USERNAME = 'dino'
+VALID_PASSWORD = 'dino123'
+
+def login_required(f):
+    """Decorator to require login for routes"""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session or not session['logged_in']:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # Initialize Parallel client
 PARALLEL_API_KEY = os.getenv('PARALLEL_API_KEY')
 if not PARALLEL_API_KEY:
@@ -1161,7 +1175,35 @@ Return your analysis in the specified JSON format.
             return True, None
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if username == VALID_USERNAME and password == VALID_PASSWORD:
+            session['logged_in'] = True
+            session['username'] = username
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
+            return render_template('login.html', error='Invalid username or password')
+    
+    # If already logged in, redirect to index
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Logout and clear session"""
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     """Main page with public report library and report generation"""
     # Get running tasks first
@@ -1194,6 +1236,7 @@ def index():
                          active_tasks=active_tasks_for_library)
 
 @app.route('/generate-report', methods=['POST'])
+@login_required
 def generate_report():
     """Generate a new market research report (global rate limited)"""
     # Check global rate limit
@@ -1286,6 +1329,7 @@ def generate_report():
         return jsonify({'error': f'Failed to generate report: {str(e)}'}), 500
 
 @app.route('/stream-events/<task_run_id>')
+@login_required
 def stream_events(task_run_id):
     """Stream real-time events from a task run via SSE with robust error handling"""
     print(f"SSE request for task {task_run_id}")
@@ -1458,6 +1502,7 @@ def process_task_event(event_type, event_data):
     return processed
 
 @app.route('/monitor-task/<task_run_id>', methods=['POST'])
+@login_required
 def monitor_task_with_sse(task_run_id):
     """
     Monitor task with robust reconnection and state tracking
@@ -1661,6 +1706,7 @@ def is_recoverable_error(error_message):
     return True
 
 @app.route('/task-status/<task_run_id>')
+@login_required
 def get_task_status(task_run_id):
     """Get current task status for polling fallback"""
     try:
@@ -1784,6 +1830,7 @@ def monitor_task_completion(task_run_id, task_metadata):
             del active_tasks[task_run_id]
 
 @app.route('/complete-task/<task_run_id>', methods=['POST'])
+@login_required
 def complete_task(task_run_id):
     """Handle task completion and save the report"""
     try:
@@ -1958,6 +2005,7 @@ def fix_table_block(table_lines):
     return table_lines
 
 @app.route('/report/<slug>')
+@login_required
 def view_report(slug):
     """View a specific report by slug"""
     report = get_report_by_slug(slug)
@@ -1986,6 +2034,7 @@ def view_report(slug):
     return response
 
 @app.route('/repair-report/<task_run_id>')
+@login_required
 def repair_report_endpoint(task_run_id):
     """Manual repair endpoint for reports with NULL title/slug"""
     repair_result = repair_null_slug_report(task_run_id)
@@ -2000,6 +2049,7 @@ def repair_report_endpoint(task_run_id):
         }), 404
 
 @app.route('/download/<slug>')
+@login_required
 def download_report(slug):
     """Download report as markdown file"""
     report = get_report_by_slug(slug)
@@ -2031,6 +2081,7 @@ def download_report(slug):
     return send_file(temp_file.name, as_attachment=True, download_name=filename)
 
 @app.route('/api/validate-inputs', methods=['POST'])
+@login_required
 def validate_inputs_api():
     """API endpoint for real-time input validation"""
     try:
@@ -2087,6 +2138,7 @@ def api_status():
     })
 
 @app.route('/api/library-html')
+@login_required
 def get_library_html():
     """Get library section HTML for real-time updates"""
     # Basic rate limiting: max 1 request per second per IP
@@ -2209,6 +2261,7 @@ def get_library_html():
         '''
 
 @app.route('/api/active-tasks')
+@login_required
 def get_active_tasks_api():
     """Get active tasks for the current session"""
     try:
@@ -2282,5 +2335,8 @@ except Exception as e:
 
 
 if __name__ == '__main__':
-    # Run the application locally
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Run the application locally or in production
+    # Railway and other platforms set PORT environment variable
+    port = int(os.getenv('PORT', 5001))
+    debug = os.getenv('FLASK_ENV') != 'production'
+    app.run(debug=debug, host='0.0.0.0', port=port)
