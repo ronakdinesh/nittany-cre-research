@@ -11,21 +11,42 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rocket.css') }}">
     
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-robot me-2"></i>
-                <span class="mono">Nittany AI</span>
+            <a class="navbar-brand d-flex flex-column align-items-start" href="{{ url_for('index') }}">
+                <div class="brand-main">
+                    <span class="brand-nittany">NITTANY</span>
+                    <span class="brand-ai">AI</span>
+                </div>
+                <span class="brand-subtitle">CRE RESEARCH AI AGENT</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if session.logged_in %}
+                    <li class="nav-item">
+                        <div class="user-badge">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="user-name">{{ session.username }}</span>
+                        </div>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a class="btn btn-outline-logout" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
             </div>
         </div>
     </nav>
@@ -36,16 +57,12 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-5">
+    <footer class="mt-5 pb-5 text-center">
         <div class="container">
             <div class="footer-text">
-                Built with <a href="https://parallel.ai" class="footer-link">Parallel</a> & <a href="https://supabase.com" class="footer-link">Supabase</a>
-                •
-                <a href="https://github.com/parallel-web/parallel-cookbook/tree/main/python-recipes/market-analysis-demo" class="footer-link">View on GitHub</a>
-            </div>
-            <div class="footer-text mt-2" style="font-size: 0.8rem;">
-                This is a Free Public Demo with low rate-limits<br>
-                Please self-host with your own model for extensive use
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Requus Capital" style="height: 40px; margin-bottom: 10px;">
+                <br>
+                build by Requus Capital | Global Real Estate and Tech Investments
             </div>
         </div>
     </footer>

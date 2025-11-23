@@ -214,9 +214,15 @@ const App = {
         if (!generateBtn) return;
         
         if (isLoading) {
+            // Add launching animation class
+            generateBtn.classList.add('launching');
+            
             generateBtn.disabled = true;
-            spinner?.classList.remove('d-none');
-            if (btnText) btnText.textContent = 'Launching Nittany AI Research...';
+            // Delay showing the spinner/text change slightly to let the rocket fly
+            setTimeout(() => {
+                spinner?.classList.remove('d-none');
+                if (btnText) btnText.textContent = 'Launching Nittany AI Research...';
+            }, 400);
             
             // Add submitting class and disable form inputs
             if (form) {
@@ -231,6 +237,7 @@ const App = {
             this.showStreamingUI();
             
         } else {
+            generateBtn.classList.remove('launching');
             generateBtn.disabled = false;
             spinner?.classList.add('d-none');
             if (btnText) btnText.textContent = 'Launch Nittany AI Research';
