@@ -156,12 +156,16 @@ def send_report_ready_email(email, report_title, report_slug, task_id):
         )
         
         # Prepare email data
+        # Use Resend's test domain for development, or verified domain for production
+        from_domain = "onboarding@resend.dev"  # Resend test domain - works without verification
+        # For production, use: "updates@aimarketresearch.app" (requires domain verification)
+        
         email_data = {
-            "from": "Nittany AI <updates@aimarketresearch.app>",
+            "from": f"Nittany AI <{from_domain}>",
             "to": [email],
             "subject": "Nittany AI report is now available",
             "html": html_content,
-            "reply_to": "updates@aimarketresearch.app"
+            "reply_to": from_domain
         }
         
         # Send email via Resend API
