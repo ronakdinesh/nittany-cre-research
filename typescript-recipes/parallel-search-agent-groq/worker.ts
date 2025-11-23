@@ -106,22 +106,40 @@ export default {
 
         // Define the search tool
         const searchTool = tool({
-          description: `# Web Search Tool
+          description: `# Commercial Real Estate Research Tool - Global & MENA Markets
 
-**Purpose:** Perform web searches and return LLM-friendly results.
+**Purpose:** Search for current commercial real estate data, property information, market trends, and investment insights for global markets, with particular strength in MENA (Middle East and North Africa) markets.
 
 **Usage:**
-- objective: Natural-language description of your research goal (max 200 characters)
+- objective: Natural-language description of your commercial real estate research goal (max 200 characters)
+  MENA Examples:
+  - "Find recent sales comps for office buildings in Dubai Marina"
+  - "Current market cap rates for retail properties in Riyadh, Saudi Arabia"
+  - "Office property prices in UAE"
+  - "Industrial lease rates in KSA"
+  - "Zoning regulations for mixed-use development in New Cairo, Egypt"
+  - "Demographics and economic indicators for Abu Dhabi, UAE"
+  - "Industrial property lease rates in Doha, Qatar"
+  
+  Global Examples:
+  - "Office property prices per square foot in Manhattan, New York"
+  - "Retail vacancy rates in London, UK"
+  - "Industrial cap rates in Singapore"
+  - "Residential property trends in Tokyo, Japan"
+  - "Hospitality investment opportunities in European markets"
 
 **Best Practices:**
-- Be specific about what information you need
-- Mention if you want recent/current data
-- Keep objectives concise but descriptive`,
+- Specify property type (office, retail, industrial, residential, hospitality, etc.)
+- Include location details (city, country, district/area)
+- Request specific metrics (price per sqft/sq meter, cap rates, yield rates, vacancy rates, etc.)
+- Mention if you need recent/current data (real estate markets are dynamic)
+- Keep objectives concise but include key search terms for real estate databases and sources
+- For MENA markets, consider regional variations in measurement units and market practices`,
           inputSchema: z.object({
             objective: z
               .string()
               .describe(
-                "Natural-language description of your research goal (max 200 characters)"
+                "Natural-language description of your commercial real estate research goal (max 200 characters)"
               ),
           }),
           execute,
@@ -137,16 +155,28 @@ export default {
           model: groq("meta-llama/llama-4-maverick-17b-128e-instruct"),
           system:
             systemPrompt ||
-            `You are a search agent with access to a web search tool. You MUST use the search tool to gather information before providing your final answer.
+            `You are a commercial real estate research agent specializing in global property analysis, market research, and investment insights, with particular expertise in MENA (Middle East and North Africa) markets. You have access to a web search tool to gather current market data, property information, and commercial real estate intelligence worldwide.
+
+Your expertise includes:
+- Commercial property valuations and comps globally (with deep knowledge of MENA markets: Dubai, Riyadh, Cairo, Abu Dhabi, Doha, UAE, KSA, etc.)
+- Market trends and analysis (office, retail, industrial, residential, hospitality) across global and MENA markets
+- Zoning and regulatory information for jurisdictions worldwide, including MENA, UAE, and KSA
+- Property history and ownership details in global and MENA markets
+- Area demographics and economic indicators for cities and regions globally
+- Investment analysis, cap rates, and yield rates in global and MENA markets
+- Lease rates and market comparables across international and MENA cities
 
 Instructions:
-1. For ANY user query, first use the search tool with a relevant objective
-2. You can make 1-3 searches from different angles if needed
-3. After gathering search results, provide a comprehensive final answer
+1. For ANY user query about commercial real estate (global or MENA-specific), use the search tool to gather current, accurate data
+2. Conduct 1-3 searches from different angles (e.g., property details, market trends, comparable properties)
+3. Provide comprehensive, data-driven answers with specific metrics, dates, and sources
+4. Focus on actionable insights for real estate professionals, investors, and brokers operating globally or in MENA markets
+5. When researching MENA markets, be aware of regional variations in regulations, market practices, and currency (AED, SAR, EGP, QAR, etc.)
+6. For global queries, adapt your research approach to the specific market's conventions and data availability
 
 The current date is ${new Date(Date.now()).toISOString().slice(0, 10)}
 
-IMPORTANT: Always start by using the search tool - do not provide answers without first searching!`,
+IMPORTANT: Always use the search tool to gather current market data - commercial real estate information changes frequently and requires up-to-date sources!`,
           prompt: query,
           tools: { search: searchTool },
           toolChoice: "auto",

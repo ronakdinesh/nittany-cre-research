@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parallel + Groq</title>
+    <title>Commercial Real Estate Research Agent</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -399,7 +399,7 @@
         <div class="text-center mb-8 sm:mb-12">
             <img src="https://assets.p0web.com/dark-parallel-symbol-270.svg" alt="Parallel"
                 class="mx-auto mb-4 w-12 h-12 sm:w-16 sm:h-16">
-            <h1 class="heading-font text-2xl sm:text-4xl font-bold mb-2">Web Search Agent</h1>
+            <h1 class="heading-font text-2xl sm:text-4xl font-bold mb-2">Commercial Real Estate Research Agent</h1>
             <p class="text-light-secondary text-sm sm:text-base">Powered by Parallel Search API & Groq AI</p>
         </div>
 
@@ -407,7 +407,7 @@
         <div id="search-interface" class="space-y-4 sm:space-y-6">
             <div
                 class="relative flex flex-row items-center gap-3 pr-2 search-input-container bg-light-surface border border-light rounded-md focus-within:border-neutral-400 transition-all duration-200 hover-light-surface">
-                <input type="text" id="search-input" placeholder="What would you like to know?"
+                <input type="text" id="search-input" placeholder="Ask about global or MENA properties, markets, comps, or investment analysis..."
                     class="w-full lg:px-4 sm:px-5 py-3 sm:py-4 text-sm lg:text-base bg-transparent focus:outline-none text-black placeholder-neutral-500">
                 <button id="search-btn"
                     class="search-btn h-10 px-4 sm:px-5 bg-black text-white rounded hover:bg-neutral-800 transition-all duration-200 font-medium text-sm sm:text-base">
@@ -427,7 +427,7 @@
         <!-- Results Interface -->
         <div id="results-interface" class="hidden">
             <div class="flex items-center justify-between mb-6 sm:mb-8">
-                <h2 class="text-xl sm:text-2xl font-semibold text-black">Search Results</h2>
+                <h2 class="text-xl sm:text-2xl font-semibold text-black">Research Results</h2>
                 <button id="new-search-btn"
                     class="px-4 py-2 bg-light-surface text-black rounded border border-light hover-light-surface hover:border-neutral-400 transition-all duration-200 text-sm font-medium">
                     New Search
@@ -442,7 +442,7 @@
         <!-- Loading State -->
         <div id="loading-state" class="hidden text-center py-12 sm:py-16">
             <div class="spinner w-7 h-7 sm:w-9 sm:h-9 mx-auto mb-6"></div>
-            <p class="text-light-secondary text-sm sm:text-base font-medium">Researching your query...</p>
+            <p class="text-light-secondary text-sm sm:text-base font-medium">Researching commercial real estate data...</p>
         </div>
 
         <!-- Footer -->
@@ -563,7 +563,7 @@
                 loadingElement.className = 'typing-indicator p-3 sm:p-4 rounded mb-4 search-result';
                 loadingElement.innerHTML = `
                     <div class="flex items-center text-sm text-light-secondary">
-                        <span class="mr-2">💭 AI is thinking</span>
+                        <span class="mr-2">💭 Analyzing real estate data...</span>
                         <div class="typing-dots">
                             <div class="typing-dot"></div>
                             <div class="typing-dot"></div>
@@ -575,7 +575,7 @@
                 loadingElement.className = 'typing-indicator p-3 sm:p-4 rounded mb-4 search-result';
                 loadingElement.innerHTML = `
                     <div class="flex items-center text-sm text-light-secondary">
-                        <span class="mr-2">🧠 AI is reasoning</span>
+                        <span class="mr-2">🧠 Evaluating market insights...</span>
                         <div class="typing-dots">
                             <div class="typing-dot"></div>
                             <div class="typing-dot"></div>
@@ -587,7 +587,7 @@
                 loadingElement.className = 'typing-indicator p-3 sm:p-4 rounded mb-4 search-result';
                 loadingElement.innerHTML = `
                     <div class="flex items-center text-sm text-light-secondary">
-                        <span class="mr-2">🔍 Searching web sources</span>
+                        <span class="mr-2">🔍 Researching property data...</span>
                         <div class="typing-dots">
                             <div class="typing-dot"></div>
                             <div class="typing-dot"></div>

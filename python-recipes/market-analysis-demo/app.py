@@ -213,16 +213,147 @@ def create_slug(title):
     conn.close()
     return slug
 
-def generate_market_research_input(industry, geography, details):
+def generate_market_research_input(industry, geography, details, cre_sector=None):
     """Generate research input based on user parameters"""
     geography_text = geography if geography and geography.strip() else "Not specified"
     details_text = details if details and details.strip() else "Not specified"
+    cre_sector_text = cre_sector if cre_sector and cre_sector.strip() else "Not specified"
+    
+    # Add specific context for UAE and KSA
+    geography_context = ""
+    if geography_text.upper() == "UAE":
+        geography_context = "\nNOTE: UAE refers to the United Arab Emirates. Focus on all seven emirates (Dubai, Abu Dhabi, Sharjah, Ajman, Umm Al Quwain, Ras Al Khaimah, Fujairah) with emphasis on major commercial centers like Dubai and Abu Dhabi. Consider local regulations, currency (AED), and MENA market dynamics.\n"
+    elif geography_text.upper() == "KSA":
+        geography_context = "\nNOTE: KSA refers to the Kingdom of Saudi Arabia. Focus on major commercial centers like Riyadh, Jeddah, Dammam, and other key economic regions. Consider local regulations, currency (SAR), Vision 2030 initiatives, and MENA market dynamics.\n"
+    
+    # Add CRE sector-specific context
+    cre_sector_context = ""
+    if cre_sector_text and cre_sector_text != "Not specified":
+        if cre_sector_text == "All":
+            cre_sector_context = """
+NOTE: This report should cover ALL major Commercial Real Estate sectors. Provide comprehensive analysis across all 9 CRE sectors:
+
+1. **Office**: Corporate headquarters, business parks, co-working spaces, government offices, medical offices. Key drivers: employment growth, hybrid work trends, business expansions.
+
+2. **Retail**: Shopping malls, strip centers, high-street retail, big-box retail, F&B clusters. Key drivers: consumer spending, e-commerce activity, footfall patterns.
+
+3. **Industrial & Logistics**: Warehouses, fulfillment centers, cold storage, manufacturing plants, last-mile logistics hubs. Key drivers: e-commerce growth, trade volumes, supply-chain infrastructure.
+
+4. **Multifamily Residential**: Apartment complexes, serviced apartments, build-to-rent communities, student housing, senior living residences. Key drivers: population growth, rental demand, affordability dynamics.
+
+5. **Hospitality**: Hotels (luxury, midscale, budget), resorts, serviced hotel apartments, short-stay units. Key drivers: tourism demand, business travel, events and exhibitions.
+
+6. **Mixed-Use**: Retail + Residential, Office + Retail, Hotel + Retail, integrated mega-projects. Key drivers: urban planning, footfall synergy, lifestyle demand.
+
+7. **Specialty Real Estate**: Data centers, life sciences/biopharma labs, education facilities, healthcare facilities, cold chain facilities, car park structures, religious buildings, cultural/entertainment hubs. Key drivers: digital transformation, demographics, government policies.
+
+8. **Land**: Greenfield, brownfield, zoned/master-planned plots, agricultural land (when commercialized). Key drivers: zoning rules, masterplans, infrastructure development.
+
+9. **Flex & Hybrid Spaces**: Co-warehousing, cloud kitchens, flexible retail kiosks, pop-up experience centers, innovation hubs/incubators. Key drivers: startup ecosystem, flexible demand, lower CAPEX models.
+
+Provide comprehensive coverage with sector-specific insights, trends, and metrics for each sector."""
+        else:
+            sector_contexts = {
+                "Office": """
+NOTE: Office sector includes spaces used for business operations such as:
+- Corporate headquarters
+- Business parks
+- Co-working spaces
+- Government offices
+- Medical offices (non-hospital)
+
+Key drivers to analyze: employment growth, hybrid work trends, business expansions, office space demand patterns, lease rates, and vacancy trends.""",
+                
+                "Retail": """
+NOTE: Retail sector includes properties where goods or services are sold to consumers such as:
+- Shopping malls
+- Strip centers
+- High-street retail
+- Big-box retail (e.g., IKEA, Carrefour)
+- F&B clusters
+
+Key drivers to analyze: consumer spending, e-commerce activity, footfall patterns, retail sales trends, and tenant mix strategies.""",
+                
+                "Industrial & Logistics": """
+NOTE: Industrial & Logistics sector includes facilities supporting manufacturing, storage, and distribution such as:
+- Warehouses
+- Fulfillment centers
+- Cold storage
+- Manufacturing plants
+- Last-mile logistics hubs
+
+Key drivers to analyze: e-commerce growth, trade volumes, supply-chain infrastructure, logistics demand, and industrial lease rates.""",
+                
+                "Multifamily Residential": """
+NOTE: Multifamily Residential sector includes income-generating residential properties (not single-family) such as:
+- Apartment complexes
+- Serviced apartments
+- Build-to-rent communities
+- Student housing
+- Senior living residences
+
+Key drivers to analyze: population growth, rental demand, affordability dynamics, rental yields, and demographic trends.""",
+                
+                "Hospitality": """
+NOTE: Hospitality sector includes properties for lodging and tourism such as:
+- Hotels (luxury, midscale, budget)
+- Resorts
+- Serviced hotel apartments
+- Short-stay units (Airbnb-type managed stock)
+
+Key drivers to analyze: tourism demand, business travel, events and exhibitions, occupancy rates, ADR (Average Daily Rate), and RevPAR (Revenue per Available Room).""",
+                
+                "Mixed-Use": """
+NOTE: Mixed-Use sector includes developments combining multiple asset classes such as:
+- Retail + Residential
+- Office + Retail
+- Hotel + Retail
+- Integrated mega-projects (e.g., Dubai Downtown, Yas Bay)
+
+Key drivers to analyze: urban planning, footfall synergy, lifestyle demand, integrated development trends, and mixed-use project performance.""",
+                
+                "Specialty Real Estate": """
+NOTE: Specialty Real Estate sector includes emerging and alternative CRE categories such as:
+- Data centers
+- Life sciences / biopharma labs
+- Education (schools, training centers)
+- Healthcare facilities (hospitals, clinics)
+- Cold chain facilities
+- Car park structures
+- Religious buildings
+- Cultural / entertainment hubs (museums, theaters)
+
+Key drivers to analyze: digital transformation, demographics, government policies, specialized infrastructure demand, and niche market dynamics.""",
+                
+                "Land": """
+NOTE: Land sector includes non-income-producing parcels with future development potential such as:
+- Greenfield
+- Brownfield
+- Zoned / master-planned plots
+- Agricultural land (when commercialized)
+
+Key drivers to analyze: zoning rules, masterplans, infrastructure development, land values, development potential, and regulatory environment.""",
+                
+                "Flex & Hybrid Spaces": """
+NOTE: Flex & Hybrid Spaces sector includes modern CRE formats such as:
+- Co-warehousing
+- Cloud kitchens
+- Flexible retail kiosks
+- Pop-up experience centers
+- Innovation hubs / incubators
+
+Key drivers to analyze: startup ecosystem, flexible demand, lower CAPEX models, shared economy trends, and flexible space innovations."""
+            }
+            
+            cre_sector_context = sector_contexts.get(cre_sector_text, "")
     
     research_input = (
         "Generate a comprehensive market research report based on the following criteria:\n\n"
         "If geography is not specified, default to a global market scope.\n"
         "Ensure the report includes key trends, risks, metrics, and major players.\n"
-        "Incorporate the specific details provided when applicable.\n\n"
+        "Incorporate the specific details provided when applicable.\n"
+        f"{geography_context}\n"
+        f"{cre_sector_context}\n"
         "CRITICAL FORMATTING INSTRUCTIONS:\n"
         "- Use valid GitHub Flavored Markdown (GFM) for all content.\n"
         "- For tables:\n"
@@ -240,6 +371,7 @@ def generate_market_research_input(industry, geography, details):
         "- Use proper citation numbers [1], [2], etc. throughout the text\n\n"
         f"Industry: {industry}\n"
         f"Geography: {geography_text}\n"
+        f"Commercial Real Estate Sector: {cre_sector_text}\n"
         f"Specific Details Required: {details_text}"
     )
     
@@ -1073,6 +1205,7 @@ def generate_report():
     data = request.json
     industry = data.get('industry', '').strip()
     geography = data.get('geography', '').strip()
+    cre_sector = data.get('cre_sector', '').strip()
     details = data.get('details', '').strip()
     email = data.get('email', '').strip() if data.get('email') else None
     processor = data.get('processor', 'ultra').strip()  # Default to 'ultra'
@@ -1093,7 +1226,7 @@ def generate_report():
     
     try:
         # Generate research input
-        research_input = generate_market_research_input(industry, geography, details)
+        research_input = generate_market_research_input(industry, geography, details, cre_sector)
         
         # Create task with Parallel API (events enabled by default for all processors)
         task_run = client.task_run.create(
@@ -1111,6 +1244,7 @@ def generate_report():
             'task_run_id': task_run.run_id,
             'industry': industry,
             'geography': geography,
+            'cre_sector': cre_sector,
             'details': details
         }
         
@@ -1118,6 +1252,7 @@ def generate_report():
         session[f'task_{task_run.run_id}'] = task_metadata
         
         # Use task_run_id as the session identifier (much simpler!)
+        # Note: cre_sector is stored in task_metadata, database schema may need updating for separate storage
         save_running_task(task_run.run_id, industry, geography, details, task_run.run_id, email)
         print(f"Generate report - saving task {task_run.run_id} with session_id: {task_run.run_id}, email: {email}")
         

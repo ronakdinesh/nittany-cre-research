@@ -113,6 +113,7 @@ const App = {
         return {
             industry: document.getElementById('industry')?.value.trim() || '',
             geography: document.getElementById('geography')?.value || '',
+            cre_sector: document.getElementById('cre_sector')?.value || '',
             details: document.getElementById('details')?.value.trim() || '',
             email: document.getElementById('email')?.value.trim() || '',
             processor: 'ultra'  // Always use ultra as default processor
