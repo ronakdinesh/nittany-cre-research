@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Market Research Tool - AI-Powered Analysis{% endblock %}
+{% block title %}Nittany AI - Intelligent Market Research{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <div class="hero-section">
     <div class="hero-text-container">
-        <h1 class="hero-title gerstner">Market Research On Demand</h1>
+        <h1 class="hero-title gerstner">Nittany AI Research</h1>
         <p class="hero-subtitle">
-            Generate a multi-page market research report on any industry, with comprehensive in-line citations, reasoning and excerpts. Powered by Parallel Deep Research.
+            Generate comprehensive market research reports on any industry. 
+            Powered by Nittany AI and Parallel Deep Research.
         </p>
     </div>
     <div class="centered-content">
@@ -103,7 +104,7 @@
                                 <button type="submit" class="btn btn-primary btn-lg" id="generate-btn" 
                                         {% if recent_report_count >= max_reports_per_hour %}disabled{% endif %}>
                                     <i class="fas fa-rocket me-2"></i>
-                                    <span class="btn-text">Launch AI Research</span>
+                                    <span class="btn-text">Launch Nittany AI Research</span>
                                     <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
                                 </button>
                                 {% if recent_report_count >= max_reports_per_hour %}

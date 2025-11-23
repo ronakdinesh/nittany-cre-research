@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ report.title }} - Market Research Report{% endblock %}
+{% block title %}{{ report.title }} - Nittany AI Report{% endblock %}
 
 {% block extra_head %}
 <meta name="description" content="Market research report for {{ report.industry }}{% if report.geography %} in {{ report.geography }}{% endif %}">
@@ -137,6 +137,144 @@ if (window.reportBasis.length > 0) {
     }
 }
 
+// Function to fix malformed tables in markdown
+function fixMalformedTables(markdown) {
+    // Split into lines for processing
+    const lines = markdown.split('\n');
+    const fixedLines = [];
+    let i = 0;
+    
+    while (i < lines.length) {
+        const line = lines[i];
+        
+        // Check if this looks like a table line (contains pipes)
+        if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+            // Potential table detected, collect all consecutive table-like lines
+            const tableLines = [];
+            let j = i;
+            
+            while (j < lines.length && lines[j].trim().startsWith('|') && lines[j].trim().endsWith('|')) {
+                tableLines.push(lines[j]);
+                j++;
+            }
+            
+            // Try to fix the table
+            const fixedTable = fixTableBlock(tableLines);
+            fixedLines.push(...fixedTable);
+            i = j;
+        } else {
+            fixedLines.push(line);
+            i++;
+        }
+    }
+    
+    return fixedLines.join('\n');
+}
+
+function fixTableBlock(tableLines) {
+    if (tableLines.length < 2) {
+        return tableLines; // Not enough lines for a table
+    }
+    
+    // Parse each line to count columns
+    const parsedLines = tableLines.map(line => {
+        const cells = line.split('|')
+            .slice(1, -1) // Remove empty strings from start/end
+            .map(cell => cell.trim());
+        return cells;
+    });
+    
+    // Find the separator line (contains only :, -, and whitespace)
+    let separatorIndex = -1;
+    for (let i = 0; i < parsedLines.length; i++) {
+        const line = tableLines[i];
+        if (/^\|[\s:|-]+\|$/.test(line.trim())) {
+            separatorIndex = i;
+            break;
+        }
+    }
+    
+    if (separatorIndex === -1) {
+        console.log('No separator found in table');
+        return tableLines;
+    }
+    
+    // Count columns from separator
+    const separatorColumns = parsedLines[separatorIndex].length;
+    console.log(`Table separator has ${separatorColumns} columns`);
+    
+    // Log column counts for debugging
+    parsedLines.forEach((cells, idx) => {
+        console.log(`Row ${idx}: ${cells.length} columns - "${cells.join(' | ')}"`);
+    });
+    
+    // Check if first line (title row) has different column count
+    if (parsedLines[0].length === 1 && separatorColumns > 1) {
+        console.log('First row is a title, extracting...');
+        // First line is a title, extract it and remove it from table
+        const title = parsedLines[0][0];
+        const fixedTable = [];
+        
+        // Add title as bold text above table
+        fixedTable.push('');
+        fixedTable.push(`**${title}**`);
+        fixedTable.push('');
+        
+        // Return the rest as a proper table (skip the title row)
+        fixedTable.push(...tableLines.slice(1));
+        return fixedTable;
+    }
+    
+    // If separator is at index 1 and first row is different, it's definitely a title scenario
+    if (separatorIndex === 1 && parsedLines[0].length !== separatorColumns) {
+        console.log('Title detected at index 0 before separator');
+        const title = parsedLines[0][0];
+        const fixedTable = [];
+        
+        fixedTable.push('');
+        fixedTable.push(`**${title}**`);
+        fixedTable.push('');
+        
+        // Return everything after the title row
+        fixedTable.push(...tableLines.slice(1));
+        return fixedTable;
+    }
+    
+    // Check for column count mismatches and try to fix
+    const targetColumns = separatorColumns;
+    const fixedTableLines = [];
+    
+    for (let i = 0; i < parsedLines.length; i++) {
+        const cells = parsedLines[i];
+        
+        if (i === separatorIndex) {
+            // Keep separator as-is
+            fixedTableLines.push(tableLines[i]);
+        } else if (cells.length !== targetColumns) {
+            console.log(`Row ${i} has mismatched columns: ${cells.length} vs ${targetColumns}`);
+            // Mismatch - skip this row or try to fix
+            if (cells.length === 1) {
+                // Single cell - likely a title, output as text
+                fixedTableLines.push('');
+                fixedTableLines.push(`**${cells[0]}**`);
+                fixedTableLines.push('');
+            } else {
+                // Try to pad or truncate
+                const fixedCells = [...cells];
+                while (fixedCells.length < targetColumns) {
+                    fixedCells.push('');
+                }
+                fixedTableLines.push('| ' + fixedCells.slice(0, targetColumns).join(' | ') + ' |');
+            }
+        } else {
+            // Correct column count
+            fixedTableLines.push(tableLines[i]);
+        }
+    }
+    
+    return fixedTableLines;
+}
+
 // Enhanced markdown formatting with table of contents generation
 document.addEventListener('DOMContentLoaded', function() {
     const content = document.getElementById('report-content');
@@ -144,6 +282,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (content && markdownScript) {
         const markdownText = markdownScript.textContent || markdownScript.innerText;
+        
+        // Pre-process markdown to fix malformed tables
+        console.log('Starting table fix preprocessing...');
+        console.log('Original markdown length:', markdownText.length);
+        let processedMarkdown = fixMalformedTables(markdownText);
+        console.log('Table fix preprocessing complete');
+        console.log('Processed markdown length:', processedMarkdown.length);
+        
+        // Log a sample of tables
+        const tableMatches = processedMarkdown.match(/\|[^\n]+\|/g);
+        if (tableMatches) {
+            console.log(`Found ${tableMatches.length} table-like lines`);
+            console.log('First few table lines:', tableMatches.slice(0, 5));
+        }
         
         // Configure marked options for better parsing
         marked.setOptions({
@@ -189,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
         marked.use({ renderer });
         
         // Parse markdown content
-        let html = marked.parse(markdownText);
+        let html = marked.parse(processedMarkdown);
         
         // The content should contain references that we'll process with regex patterns below
         

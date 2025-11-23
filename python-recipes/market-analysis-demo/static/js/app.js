@@ -1,4 +1,4 @@
-// Market Research App JavaScript
+// Nittany AI App JavaScript
 
 // Global app configuration
 const App = {
@@ -114,7 +114,8 @@ const App = {
             industry: document.getElementById('industry')?.value.trim() || '',
             geography: document.getElementById('geography')?.value || '',
             details: document.getElementById('details')?.value.trim() || '',
-            email: document.getElementById('email')?.value.trim() || ''
+            email: document.getElementById('email')?.value.trim() || '',
+            processor: 'ultra'  // Always use ultra as default processor
         };
     },
     
@@ -214,7 +215,7 @@ const App = {
         if (isLoading) {
             generateBtn.disabled = true;
             spinner?.classList.remove('d-none');
-            if (btnText) btnText.textContent = 'Launching AI Research...';
+            if (btnText) btnText.textContent = 'Launching Nittany AI Research...';
             
             // Add submitting class and disable form inputs
             if (form) {
@@ -231,7 +232,7 @@ const App = {
         } else {
             generateBtn.disabled = false;
             spinner?.classList.add('d-none');
-            if (btnText) btnText.textContent = 'Launch AI Research';
+            if (btnText) btnText.textContent = 'Launch Nittany AI Research';
             
             // Remove submitting class and re-enable form inputs
             if (form) {
@@ -1284,7 +1285,7 @@ const App = {
                 <div class="d-flex align-items-center">
                     <i class="fas fa-cogs fa-spin me-3"></i>
                     <div class="flex-grow-1">
-                        <h6 class="alert-heading mb-1">Research In Progress</h6>
+                        <h6 class="alert-heading mb-1">Nittany AI Research In Progress</h6>
                         <p class="mb-1">You have ${activeTasks.length} research task(s) running in the background.</p>
                         <small class="text-muted">
                             Your reports will appear in the library below when complete. You can safely close this tab.

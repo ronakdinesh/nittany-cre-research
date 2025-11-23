@@ -7,7 +7,7 @@ import requests
 import threading
 import time
 from typing import Dict, Any, Optional
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file, Response, stream_template, render_template_string
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file, Response, stream_template, render_template_string, make_response
 from werkzeug.utils import secure_filename
 import tempfile
 from dotenv import load_dotenv
@@ -34,16 +34,18 @@ if not PARALLEL_API_KEY:
 client = Parallel(api_key=PARALLEL_API_KEY)
 
 # Initialize OpenAI client for Parallel's chat completions API (used for validation)
-try:
-    openai_client = OpenAI(
-        api_key=PARALLEL_API_KEY,
-        base_url="https://api.parallel.ai",
-        timeout=30.0,
-        max_retries=3
-    )
-except Exception as e:
-    print(f"Warning: Failed to initialize OpenAI client: {e}")
-    openai_client = None
+# Note: OpenAI client is not actually used - validation uses direct requests instead
+# try:
+#     from openai import OpenAI
+#     openai_client = OpenAI(
+#         api_key=PARALLEL_API_KEY,
+#         base_url="https://api.parallel.ai",
+#         timeout=30.0,
+#         max_retries=3
+#     )
+# except Exception as e:
+#     print(f"Warning: Failed to initialize OpenAI client: {e}")
+openai_client = None
 
 # Email configuration
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
@@ -155,9 +157,9 @@ def send_report_ready_email(email, report_title, report_slug, task_id):
         
         # Prepare email data
         email_data = {
-            "from": "Market Research <updates@aimarketresearch.app>",
+            "from": "Nittany AI <updates@aimarketresearch.app>",
             "to": [email],
-            "subject": "Market Research report is now available",
+            "subject": "Nittany AI report is now available",
             "html": html_content,
             "reply_to": "updates@aimarketresearch.app"
         }
@@ -221,6 +223,21 @@ def generate_market_research_input(industry, geography, details):
         "If geography is not specified, default to a global market scope.\n"
         "Ensure the report includes key trends, risks, metrics, and major players.\n"
         "Incorporate the specific details provided when applicable.\n\n"
+        "CRITICAL FORMATTING INSTRUCTIONS:\n"
+        "- Use valid GitHub Flavored Markdown (GFM) for all content.\n"
+        "- For tables:\n"
+        "  * NEVER put the table title as the first row inside the table structure\n"
+        "  * Always place table titles OUTSIDE and ABOVE the table using bold text: **Table Title**\n"
+        "  * Ensure ALL rows (header, separator, and body) have EXACTLY the same number of columns\n"
+        "  * Example of CORRECT table format:\n"
+        "    **Market Leaders Analysis**\n"
+        "    \n"
+        "    | Company | Revenue | Market Share |\n"
+        "    |---------|---------|-------------|\n"
+        "    | Company A | $5B | 25% |\n"
+        "    | Company B | $3B | 15% |\n"
+        "  * Add a blank line before and after every table\n"
+        "- Use proper citation numbers [1], [2], etc. throughout the text\n\n"
         f"Industry: {industry}\n"
         f"Geography: {geography_text}\n"
         f"Specific Details Required: {details_text}"
@@ -262,11 +279,11 @@ def save_report(title, slug, industry, geography, details, content, basis=None, 
     # Final safety check to prevent NULL values reaching database
     if not title or not isinstance(title, str):
         print(f"⚠️  Invalid title detected: {repr(title)}, creating fallback")
-        title = f"Market Research Report {task_run_id[-8:] if task_run_id else 'unknown'}"
+        title = f"Nittany AI Report {task_run_id[-8:] if task_run_id else 'unknown'}"
     
     if not slug or not isinstance(slug, str):
         print(f"⚠️  Invalid slug detected: {repr(slug)}, creating fallback")
-        slug = f"market-report-{task_run_id[-12:] if task_run_id else 'unknown'}"
+        slug = f"nittany-report-{task_run_id[-12:] if task_run_id else 'unknown'}"
     
     # Clean content to prevent PostgreSQL errors
     if content and isinstance(content, str):
@@ -436,7 +453,7 @@ def repair_null_slug_report(task_run_id):
         industry = result['industry'] or f"Report {task_run_id[-8:]}"
         geography = result['geography']
         
-        title = f"{industry} Market Research Report"
+        title = f"{industry} Nittany AI Report"
         if geography and geography.strip() and geography != "Not specified":
             title += f" - {geography}"
             
@@ -599,11 +616,12 @@ def save_running_task(task_run_id, industry, geography, details, session_id, ema
                 WHERE task_run_id = %s
             ''', (email, task_run_id))
         else:
-            # Insert new task (id will be NULL for running tasks)
+            # Insert new task (generate id for running tasks)
+            report_id = str(uuid.uuid4())
             cursor.execute('''
-                INSERT INTO reports (task_run_id, industry, geography, details, status, session_id, email)
-                VALUES (%s, %s, %s, %s, 'running', %s, %s)
-            ''', (task_run_id, industry, geography, details, session_id, email))
+                INSERT INTO reports (id, task_run_id, industry, geography, details, status, session_id, email)
+                VALUES (%s, %s, %s, %s, %s, 'running', %s, %s)
+            ''', (report_id, task_run_id, industry, geography, details, session_id, email))
         
         rows_affected = cursor.rowcount
         conn.commit()
@@ -654,7 +672,7 @@ def get_running_tasks():
                 basis = getattr(run_result.output, "basis", None)
                 
                 # Create title and slug
-                title = f"{task['industry']} Market Research Report"
+                title = f"{task['industry']} Nittany AI Report"
                 if task['geography'] and task['geography'] != "Not specified":
                     title += f" - {task['geography']}"
                 
@@ -1057,6 +1075,12 @@ def generate_report():
     geography = data.get('geography', '').strip()
     details = data.get('details', '').strip()
     email = data.get('email', '').strip() if data.get('email') else None
+    processor = data.get('processor', 'ultra').strip()  # Default to 'ultra'
+    
+    # Validate processor
+    valid_processors = ['pro', 'ultra', 'ultra2x', 'ultra4x', 'ultra8x']
+    if processor not in valid_processors:
+        processor = 'ultra'  # Fallback to ultra if invalid
     
     if not industry:
         return jsonify({'error': 'Industry is required'}), 400
@@ -1071,10 +1095,10 @@ def generate_report():
         # Generate research input
         research_input = generate_market_research_input(industry, geography, details)
         
-        # Create task with Parallel API (events enabled by default for ultra2x processor)
+        # Create task with Parallel API (events enabled by default for all processors)
         task_run = client.task_run.create(
             input=research_input,
-            processor="ultra2x",
+            processor=processor,
             task_spec={
                 "output_schema": {
                     "type": "text",
@@ -1341,7 +1365,7 @@ def monitor_task_with_sse(task_run_id):
                 
                 # Create and save report with error handling
                 try:
-                    title = f"{task_metadata['industry']} Market Research Report"
+                    title = f"{task_metadata['industry']} Nittany AI Report"
                     if task_metadata['geography'] and task_metadata['geography'] != "Not specified":
                         title += f" - {task_metadata['geography']}"
                     
@@ -1352,8 +1376,8 @@ def monitor_task_with_sse(task_run_id):
                     print(f"❌ Title/slug generation failed for task {task_run_id}: {e}")
                     print(f"❌ task_metadata: {task_metadata}")
                     # Create fallback title/slug to prevent NULL
-                    title = f"Market Research Report {task_run_id[-8:]}"
-                    slug = f"market-report-{task_run_id[-12:]}"
+                    title = f"Nittany AI Report {task_run_id[-8:]}"
+                    slug = f"nittany-report-{task_run_id[-12:]}"
                     print(f"🔧 Using fallback title='{title}', slug='{slug}'")
                 
                 report_id = save_report(
@@ -1575,7 +1599,7 @@ def monitor_task_completion(task_run_id, task_metadata):
                 
                 # Create title and slug with error handling
                 try:
-                    title = f"{task_metadata['industry']} Market Research Report"
+                    title = f"{task_metadata['industry']} Nittany AI Report"
                     if task_metadata['geography'] and task_metadata['geography'] != "Not specified":
                         title += f" - {task_metadata['geography']}"
                     
@@ -1586,8 +1610,8 @@ def monitor_task_completion(task_run_id, task_metadata):
                     print(f"❌ Background monitor title/slug generation failed for task {task_run_id}: {e}")
                     print(f"❌ task_metadata: {task_metadata}")
                     # Create fallback title/slug to prevent NULL
-                    title = f"Market Research Report {task_run_id[-8:]}"
-                    slug = f"market-report-{task_run_id[-12:]}"
+                    title = f"Nittany AI Report {task_run_id[-8:]}"
+                    slug = f"nittany-report-{task_run_id[-12:]}"
                     print(f"🔧 Background monitor using fallback title='{title}', slug='{slug}'")
                 
                 report_id = save_report(
@@ -1658,7 +1682,7 @@ def complete_task(task_run_id):
         
         # Create title and slug with error handling
         try:
-            title = f"{task_metadata['industry']} Market Research Report"
+            title = f"{task_metadata['industry']} Nittany AI Report"
             if task_metadata['geography'] and task_metadata['geography'] != "Not specified":
                 title += f" - {task_metadata['geography']}"
             
@@ -1669,7 +1693,7 @@ def complete_task(task_run_id):
             print(f"❌ Complete task title/slug generation failed for task {task_run_id}: {e}")
             print(f"❌ task_metadata: {task_metadata}")
             # Create fallback title/slug to prevent NULL
-            title = f"Market Research Report {task_run_id[-8:]}"
+            title = f"Nittany AI Report {task_run_id[-8:]}"
             slug = f"market-report-{task_run_id[-12:]}"
             print(f"🔧 Complete task using fallback title='{title}', slug='{slug}'")
         
@@ -1704,6 +1728,96 @@ def complete_task(task_run_id):
     except Exception as e:
         return jsonify({'error': f'Failed to complete task: {str(e)}'}), 500
 
+def fix_markdown_tables(markdown_text):
+    """Fix malformed markdown tables by extracting title rows"""
+    if not markdown_text:
+        return markdown_text
+    
+    lines = markdown_text.split('\n')
+    fixed_lines = []
+    i = 0
+    
+    while i < len(lines):
+        line = lines[i]
+        
+        # Check if this is a table line
+        if line.strip().startswith('|') and line.strip().endswith('|'):
+            # Collect all consecutive table lines
+            table_lines = []
+            j = i
+            
+            while j < len(lines) and lines[j].strip().startswith('|') and lines[j].strip().endswith('|'):
+                table_lines.append(lines[j])
+                j += 1
+            
+            # Fix the table block
+            fixed_table = fix_table_block(table_lines)
+            fixed_lines.extend(fixed_table)
+            i = j
+        else:
+            fixed_lines.append(line)
+            i += 1
+    
+    return '\n'.join(fixed_lines)
+
+def fix_table_block(table_lines):
+    """Fix a single table block with mismatched columns"""
+    if len(table_lines) < 2:
+        return table_lines
+    
+    # Parse each line to count columns
+    parsed_lines = []
+    for line in table_lines:
+        cells = [cell.strip() for cell in line.split('|')[1:-1]]
+        parsed_lines.append(cells)
+    
+    # Find separator line (contains only :, -, |, and whitespace)
+    separator_index = -1
+    for idx, line in enumerate(table_lines):
+        # Remove pipes and check if remaining chars are only separators
+        line_content = line.replace('|', '').strip()
+        if line_content and all(c in ':|- ' for c in line_content):
+            separator_index = idx
+            break
+    
+    if separator_index == -1:
+        return table_lines
+    
+    separator_columns = len(parsed_lines[separator_index])
+    
+    # Check if first row is a title (1 column when separator has more)
+    first_row_columns = len(parsed_lines[0])
+    
+    if separator_index >= 1 and first_row_columns == 1 and separator_columns > 1:
+        # Extract title and return fixed table
+        title = parsed_lines[0][0]
+        fixed = ['', f'**{title}**', '']
+        
+        # The structure after removing title is: separator, header, data rows
+        # But markdown needs: header, separator, data rows
+        # So we need to swap separator and header
+        if separator_index == 1 and len(table_lines) > 2:
+            # Put header first, then separator, then rest
+            fixed.append(table_lines[2])  # Header row
+            fixed.append(table_lines[1])  # Separator row
+            fixed.extend(table_lines[3:])  # Data rows
+        else:
+            # Fallback: just remove title row
+            fixed.extend(table_lines[1:])
+        return fixed
+    
+    # Also check if separator is at index 0 and first data row has different count
+    if separator_index == 0 and len(parsed_lines) > 1:
+        # This shouldn't happen in valid markdown, but handle it
+        if len(parsed_lines[1]) == 1 and separator_columns > 1:
+            title = parsed_lines[1][0]
+            fixed = ['', f'**{title}**', '']
+            fixed.append(table_lines[0])  # Add separator
+            fixed.extend(table_lines[2:])  # Add rest
+            return fixed
+    
+    return table_lines
+
 @app.route('/report/<slug>')
 def view_report(slug):
     """View a specific report by slug"""
@@ -1712,7 +1826,25 @@ def view_report(slug):
     if not report:
         return render_template('404.html'), 404
     
-    return render_template('report.html', report=report)
+    # Fix malformed tables in the content before rendering
+    if report.get('content'):
+        original_content = report['content']
+        fixed_content = fix_markdown_tables(original_content)
+        if fixed_content != original_content:
+            print(f"✅ Fixed tables in report {slug} - Content length: {len(original_content)} -> {len(fixed_content)}")
+            # Count how many tables were fixed
+            original_tables = original_content.count('| U.S. HVAC')
+            fixed_tables = fixed_content.count('**U.S. HVAC')
+            if fixed_tables > 0:
+                print(f"   Found and fixed {fixed_tables} table(s) with title extraction")
+        report['content'] = fixed_content
+    
+    # Add cache-busting headers to force fresh load
+    response = make_response(render_template('report.html', report=report))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @app.route('/repair-report/<task_run_id>')
 def repair_report_endpoint(task_run_id):
@@ -1854,7 +1986,7 @@ def get_library_html():
                     <i class="fas fa-cogs fa-spin"></i>
                 </div>
                 
-                <div class="company-name" style="color: #6B7280;">{{ task.industry|e }} Market Research Report{% if task.geography %} - {{ task.geography|e }}{% endif %}</div>
+                <div class="company-name" style="color: #6B7280;">{{ task.industry|e }} Nittany AI Report{% if task.geography %} - {{ task.geography|e }}{% endif %}</div>
                 
                 <div class="company-description" style="color: #9CA3AF;">
                     <i class="fas fa-hourglass-half me-2"></i>AI is currently researching market trends, competitive landscape, and strategic insights for the {{ task.industry|e }} sector{% if task.geography %} in {{ task.geography|e }}{% endif %}...
@@ -1957,7 +2089,7 @@ def get_active_tasks_api():
                 
                 # Create title and slug with error handling
                 try:
-                    title = f"{task['industry']} Market Research Report"
+                    title = f"{task['industry']} Nittany AI Report"
                     if task['geography'] and task['geography'] != "Not specified":
                         title += f" - {task['geography']}"
                     
@@ -1968,8 +2100,8 @@ def get_active_tasks_api():
                     print(f"❌ API title/slug generation failed for task {task['task_run_id']}: {e}")
                     print(f"❌ task data: {task}")
                     # Create fallback title/slug to prevent NULL
-                    title = f"Market Research Report {task['task_run_id'][-8:]}"
-                    slug = f"market-report-{task['task_run_id'][-12:]}"
+                    title = f"Nittany AI Report {task['task_run_id'][-8:]}"
+                    slug = f"nittany-report-{task['task_run_id'][-12:]}"
                     print(f"🔧 API using fallback title='{title}', slug='{slug}'")
                 
                 report_id = save_report(
@@ -2012,4 +2144,4 @@ except Exception as e:
 
 if __name__ == '__main__':
     # Run the application locally
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
