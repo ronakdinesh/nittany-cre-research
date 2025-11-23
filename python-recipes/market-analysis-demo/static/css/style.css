@@ -507,6 +507,8 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
+    max-height: calc(100vh - 200px); /* Constrain height to viewport */
+    height: 100%; /* Take full height of parent */
 }
 
 .sse-header {
@@ -516,6 +518,7 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .sse-status {
@@ -531,6 +534,10 @@ h1, h2, h3, h4, h5, h6 {
 .sse-feed {
     background: #FAFAFA; /* Slight contrast for feed area */
     padding: 1.5rem;
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    flex: 1; /* Take remaining space in flex container */
+    min-height: 0; /* Important for flex scrolling */
 }
 
 .sse-event {
@@ -573,6 +580,7 @@ h1, h2, h3, h4, h5, h6 {
     background: white;
     border-bottom: 1px solid var(--light-border);
     padding: 1rem;
+    flex-shrink: 0; /* Prevent sources section from shrinking */
 }
 
 .sources-container {
@@ -633,6 +641,19 @@ h1, h2, h3, h4, h5, h6 {
     border-color: var(--signal);
     color: var(--signal);
     background: white;
+}
+
+.sse-footer {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--light-border);
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+.sse-notice {
+    font-size: 0.75rem;
+    color: var(--gray-text);
+    text-align: center;
 }
 
 /* Report View Styling */
