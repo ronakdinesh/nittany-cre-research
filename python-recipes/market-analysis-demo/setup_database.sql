@@ -33,3 +33,4 @@ CREATE INDEX IF NOT EXISTS idx_reports_slug ON reports(slug);
 CREATE INDEX IF NOT EXISTS idx_reports_task_run_id ON reports(task_run_id);
 CREATE INDEX IF NOT EXISTS idx_rate_limit_created_at ON rate_limit(created_at);
 
+

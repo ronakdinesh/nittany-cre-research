@@ -37,3 +37,4 @@ echo "3. Check deployment status: railway status"
 echo "4. View logs: railway logs"
 echo ""
 
+

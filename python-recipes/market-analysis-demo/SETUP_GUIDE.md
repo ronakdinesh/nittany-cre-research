@@ -201,3 +201,4 @@ For production (e.g., Vercel):
 - Set proper `BASE_URL` for email links
 - Configure environment variables in your hosting platform
 
+
