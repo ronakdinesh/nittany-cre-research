@@ -1,25 +1,179 @@
-/* Rocket Launch Animation */
+/* Rocket Launch Animation - Enhanced */
+
+/* Rocket icon normal state */
+#generate-btn .fa-rocket {
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+/* Subtle hover lift */
+#generate-btn:hover .fa-rocket {
+    transform: translateY(-2px) rotate(-15deg);
+}
+
+/* Main launch animation */
 @keyframes rocketLaunch {
     0% {
-        transform: translateY(0) scale(1);
+        transform: translateY(0) scale(1) rotate(0deg);
         opacity: 1;
     }
-    20% {
-        transform: translateY(5px) scale(0.9);
+    15% {
+        transform: translateY(3px) scale(0.9) rotate(-5deg);
     }
-    40% {
-        transform: translateY(-20px) scale(1.1);
+    30% {
+        transform: translateY(-5px) scale(1.05) rotate(-25deg);
+    }
+    50% {
+        transform: translateY(-30px) scale(1.15) rotate(-35deg);
         opacity: 1;
     }
     100% {
-        transform: translateY(-100px) scale(0.5);
+        transform: translateY(-80px) scale(0.5) rotate(-45deg);
         opacity: 0;
     }
 }
 
-.launching .fa-rocket {
-    animation: rocketLaunch 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    color: #FFD700; /* Gold color for the rocket when launching */
+/* Exhaust trail effect */
+@keyframes exhaustTrail {
+    0% {
+        opacity: 0;
+        transform: scaleY(0);
+    }
+    30% {
+        opacity: 0.8;
+        transform: scaleY(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scaleY(1.5) translateY(10px);
+    }
 }
 
+/* Button glow during launch */
+@keyframes launchGlow {
+    0% {
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+    }
+    50% {
+        box-shadow: 
+            0 8px 30px rgba(99, 102, 241, 0.5),
+            0 0 60px rgba(139, 92, 246, 0.3);
+    }
+    100% {
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+    }
+}
 
+/* Launching state */
+.launching {
+    animation: launchGlow 0.8s ease-out;
+    pointer-events: none;
+}
+
+.launching .fa-rocket {
+    animation: rocketLaunch 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    color: #FBBF24 !important; /* Golden rocket */
+    text-shadow: 
+        0 0 10px rgba(251, 191, 36, 0.8),
+        0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+/* Create exhaust trail pseudo-element */
+.launching::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 30px;
+    background: linear-gradient(
+        to bottom,
+        rgba(251, 191, 36, 0.9),
+        rgba(239, 68, 68, 0.6),
+        rgba(239, 68, 68, 0.2),
+        transparent
+    );
+    border-radius: 2px;
+    transform: translateX(-50%) translateY(0);
+    animation: exhaustTrail 0.6s ease-out forwards;
+    filter: blur(2px);
+    z-index: -1;
+}
+
+/* Spark particles effect */
+@keyframes sparkle {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(0);
+    }
+}
+
+/* Form submitting state */
+.form-submitting {
+    position: relative;
+}
+
+.form-submitting::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(2px);
+    border-radius: var(--radius-xl, 24px);
+    z-index: 10;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Button text transition */
+.btn-text {
+    transition: all 0.3s ease;
+}
+
+.launching .btn-text {
+    opacity: 0.8;
+}
+
+/* Spinner styling */
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* Success state after completion */
+@keyframes successPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.launch-success {
+    animation: successPulse 0.6s ease-out;
+    background: linear-gradient(135deg, #10B981, #059669) !important;
+}
+
+.launch-success .fa-rocket {
+    display: none;
+}
+
+.launch-success::before {
+    content: '\f00c'; /* Font Awesome check */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-right: 0.5rem;
+}

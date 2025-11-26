@@ -16,6 +16,15 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <!-- Animated Blob Background -->
+    <div class="blob-background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+        <div class="blob blob-5"></div>
+    </div>
+
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
@@ -57,12 +66,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-5 pb-5 text-center">
+    <footer class="mt-5 pb-5 text-center" style="position: relative; z-index: 1;">
         <div class="container">
             <div class="footer-text">
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Requus Capital" style="height: 40px; margin-bottom: 10px;">
-                <br>
-                build by Requus Capital | Global Real Estate and Tech Investments
+                <div style="opacity: 0.6; margin-bottom: 8px;">
+                    <i class="fas fa-building" style="font-size: 24px;"></i>
+                </div>
+                Built by Requus Capital | Global Real Estate and Tech Investments
             </div>
         </div>
     </footer>

@@ -1206,27 +1206,37 @@ def logout():
 @login_required
 def index():
     """Main page with public report library and report generation"""
-    # Get running tasks first
-    active_tasks_for_library = get_running_tasks()
+    # Initialize with empty defaults for graceful degradation
+    active_tasks_for_library = []
+    public_reports = []
+    recent_report_count = 0
+    recently_completed = []
     
-    # Calculate how many slots are left for public reports (max 15 total blocks)
-    max_total_blocks = 15
-    active_tasks_count = len(active_tasks_for_library)
-    max_public_reports = max(0, max_total_blocks - active_tasks_count)
-    
-    # Get limited public reports for the library
-    public_reports = get_all_public_reports_limited(max_public_reports)
-    
-    # Debug logging
-    print(f"Index route - Active tasks: {active_tasks_count}, Max public reports: {max_public_reports}, Got public reports: {len(public_reports)}")
-    
-    # Get current rate limit status
-    recent_report_count = get_recent_report_count()
-    
-    recently_completed = []  # Simplify for now
-    
-    # Debug logging
-    print(f"Index route - active_tasks found: {len(active_tasks_for_library)}")
+    try:
+        # Get running tasks first
+        active_tasks_for_library = get_running_tasks()
+        
+        # Calculate how many slots are left for public reports (max 15 total blocks)
+        max_total_blocks = 15
+        active_tasks_count = len(active_tasks_for_library)
+        max_public_reports = max(0, max_total_blocks - active_tasks_count)
+        
+        # Get limited public reports for the library
+        public_reports = get_all_public_reports_limited(max_public_reports)
+        
+        # Debug logging
+        print(f"Index route - Active tasks: {active_tasks_count}, Max public reports: {max_public_reports}, Got public reports: {len(public_reports)}")
+        
+        # Get current rate limit status
+        recent_report_count = get_recent_report_count()
+        
+        # Debug logging
+        print(f"Index route - active_tasks found: {len(active_tasks_for_library)}")
+        
+    except Exception as e:
+        # Gracefully handle database connection failures
+        print(f"⚠️ Database unavailable, showing demo mode: {e}")
+        # Continue with empty defaults - the UI will show sample cards
     
     return render_template('index.html', 
                          recent_report_count=recent_report_count,
